@@ -4,8 +4,11 @@ import (
   "fmt"
   "net"
   "net/http"
+  "net/url" 
   "net/http/httputil"
   "strings"
+  "bytes"
+  "encoding/json"
 )
 
 type Connector interface {
@@ -49,10 +52,12 @@ func NewClientFromConnector( con Connector ) *Client {
   return &Client{con}
 }
 
-func (c *Client) do(req *http.Request) (*http.Response, *httputil.ClientConn, error) {
+func (c *Client) do2(req *http.Request) (*http.Response, *httputil.ClientConn, error) {
   connection, err := c.connector.Connect()
   if err != nil {
-    connection.Close()
+    if connection != nil {
+      connection.Close()
+    }
     return nil, nil, err
   }
   con := httputil.NewClientConn( connection, nil )
@@ -66,7 +71,81 @@ func (c *Client) do(req *http.Request) (*http.Response, *httputil.ClientConn, er
   }
   return res, con, err
 }
-/*
-func (c *Client) simple(verb, url string) (*net.HTTPResponse, *httputil.ClientConn, err) {
+
+func (c *Client) do(req *http.Request) (res *http.Response, err error){
+  res, con, err := c.do2(req)
+  if con != nil {
+    con.Close()
+  }
+  return
 }
-*/
+
+func (c *Client) callf2(verb, format string, args ...string) (*http.Response, *httputil.ClientConn, error){
+  eargs := make([]interface{}, len(args))
+  for i,arg := range args {
+    eargs[i] = url.QueryEscape(arg)
+  }
+  req, err := http.NewRequest(verb, fmt.Sprintf(format, eargs...), nil)
+  if err != nil {
+    return nil, nil, err
+  }
+  return c.do2(req)
+}
+
+func (c *Client) callf(verb, format string, args ...string) (res *http.Response, err error){
+  res, con, err := c.callf2(verb, format, args... )
+  if con != nil {
+    con.Close()
+  }
+  return
+}
+
+func (c *Client) callfjson2(verb, format string, body interface{}, args ...string) (*http.Response, *httputil.ClientConn, error){
+  eargs := make([]interface{}, len(args))
+  for i,arg := range args {
+    eargs[i] = url.QueryEscape(arg)
+  }
+  buf, err := json.Marshal(body)
+  if err != nil {
+    return nil, nil, err
+  }
+  req, err := http.NewRequest(verb, fmt.Sprintf(format, eargs...), bytes.NewBuffer(buf))
+  req.Header.Set("Content-Type","application/json")
+  if err != nil {
+    return nil, nil, err
+  }
+  return c.do2(req)
+}
+
+func (c *Client) callfjson(verb, format string, body interface{}, args ...string) (res *http.Response,err  error){
+  res, con, err := c.callfjson2(verb, format, body, args...)
+  if con != nil {
+    con.Close()
+  }
+  return
+}
+
+func (c *Client) callfquery2(verb, format string, query url.Values, args ...string) (*http.Response, *httputil.ClientConn, error){
+  eargs := make([]interface{}, len(args))
+  for i,arg := range args {
+    eargs[i] = url.QueryEscape(arg)
+  }
+  url := strings.Join([]string{
+    fmt.Sprintf(format, eargs...),
+    query.Encode(),
+  },"?")
+  req, err := http.NewRequest(verb,url,nil)
+  if err != nil {
+    return nil, nil, err
+  }
+  return c.do2(req)
+}
+
+func (c *Client) callfquery(verb, format string, query url.Values, args ...string) (res *http.Response, err error){
+  res, con, err := c.callfquery2(verb, format, query, args...)
+  if con != nil {
+    con.Close()
+  }
+  return
+}
+

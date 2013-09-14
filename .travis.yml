@@ -1,0 +1,15 @@
+language: go
+go:
+  - 1.0
+  - 1.1
+  - tip
+before_install:
+  - apt-get update
+  - wget -O /tmp/vagrant.deb http://files.vagrantup.com/packages/0224c6232394680971a69d94dd55a7436888c4cb/vagrant_1.3.0_x86_64.deb
+  - go get github.com/mattn/gom
+install:
+  - dpkg -i /tmp/vagrant.deb
+  - vagrant up
+  - $HOME/gopath/bin/gom install
+script:
+  - $HOME/gopath/bin/gom test

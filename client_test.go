@@ -22,7 +22,7 @@ func TestClientConnection(t *testing.T) {
   }
   client := NewClientFromConnector(&s)
   req,_  := http.NewRequest("GET","/info", nil)
-  res, _, err := client.do(req)
+  res, err := client.do(req)
   if err != nil {
     t.Fatal(err)
   }
@@ -55,7 +55,7 @@ func TestClientHijackedConnection(t *testing.T) {
   }
   client := NewClientFromConnector(&p)
   req,_  := http.NewRequest("GET","/upcase", nil)
-  res, con, err := client.do(req)
+  res, con, err := client.do2(req)
   if err != nil {
     t.Fatal(err)
   }

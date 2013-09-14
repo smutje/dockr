@@ -58,4 +58,10 @@ func (t *testServer) String() string {
   return "TestServer"
 }
 
-
+func newTestClient() *Client {
+  c,err := NewClient("tcp://localhost:14243")
+  if err != nil {
+    panic(err)
+  }
+  return c
+}
