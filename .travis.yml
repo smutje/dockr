@@ -6,6 +6,7 @@ before_install:
   - wget -O /tmp/vagrant.deb http://files.vagrantup.com/packages/0224c6232394680971a69d94dd55a7436888c4cb/vagrant_1.3.0_x86_64.deb
   - go get github.com/mattn/gom
 install:
+  - sudo apt-get install virtualbox
   - sudo dpkg -i /tmp/vagrant.deb
   - vagrant up
   - $HOME/gopath/bin/gom install
