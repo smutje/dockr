@@ -3,6 +3,7 @@ package dockr
 import (
   "fmt"
   "net"
+  "io"
   "net/http"
   "net/url" 
   "net/http/httputil"
@@ -126,6 +127,14 @@ func (c *Client) callfjson(verb, format string, body interface{}, args ...string
 }
 
 func (c *Client) callfquery2(verb, format string, query url.Values, args ...string) (*http.Response, *httputil.ClientConn, error){
+  return c.callfquerybody2(verb, format, query, nil, args...)
+}
+
+func (c *Client) callfquery(verb, format string, query url.Values, args ...string) (res *http.Response, err error){
+  return c.callfquerybody(verb, format, query, nil, args...)
+}
+
+func (c *Client) callfquerybody2(verb, format string, query url.Values,body io.Reader, args ...string) (*http.Response, *httputil.ClientConn, error){
   eargs := make([]interface{}, len(args))
   for i,arg := range args {
     eargs[i] = url.QueryEscape(arg)
@@ -134,15 +143,15 @@ func (c *Client) callfquery2(verb, format string, query url.Values, args ...stri
     fmt.Sprintf(format, eargs...),
     query.Encode(),
   },"?")
-  req, err := http.NewRequest(verb,url,nil)
+  req, err := http.NewRequest(verb,url,body)
   if err != nil {
     return nil, nil, err
   }
   return c.do2(req)
 }
 
-func (c *Client) callfquery(verb, format string, query url.Values, args ...string) (res *http.Response, err error){
-  res, con, err := c.callfquery2(verb, format, query, args...)
+func (c *Client) callfquerybody(verb, format string, query url.Values,body io.Reader, args ...string) (res *http.Response, err error){
+  res, con, err := c.callfquerybody2(verb, format, query, body, args...)
   if con != nil {
     con.Close()
   }

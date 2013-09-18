@@ -2,7 +2,7 @@ package dockr
 
 import (
   "net"
-  "bufio"
+  "io"
   "fmt"
   "regexp"
 )
@@ -43,7 +43,7 @@ func expectHTTPStatus( actual int, expected ...int) error {
 
 type hijackReadWriteCloser struct {
   con net.Conn
-  buf *bufio.Reader
+  buf io.Reader
 }
 func (h *hijackReadWriteCloser) Read(p []byte) (int, error){
   return h.buf.Read(p)

@@ -1,14 +1,16 @@
 language: go
 go:
   - 1.1
+env:
+  - DOCKR_HOST=unix:///var/run/docker.sock
 before_install:
+  - sudo sh -c "wget -O - http://get.docker.io/gpg | apt-key add -"
+  - sudo sh -c "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
   - sudo apt-get update
-  - wget -O /tmp/vagrant.deb http://files.vagrantup.com/packages/0224c6232394680971a69d94dd55a7436888c4cb/vagrant_1.3.0_x86_64.deb
   - go get github.com/mattn/gom
 install:
-  - sudo apt-get install virtualbox
-  - sudo dpkg -i /tmp/vagrant.deb
-  - vagrant up
+  - sudo apt-get install --yes lxc-docker
+  - sudo docker pull ubuntu:precise
   - $HOME/gopath/bin/gom install
 script:
   - $HOME/gopath/bin/gom test

@@ -6,6 +6,7 @@ import (
   "net/http"
   "io"
   "bufio"
+  "syscall"
 )
 
 type testResponseWriter struct {
@@ -59,7 +60,11 @@ func (t *testServer) String() string {
 }
 
 func newTestClient() *Client {
-  c,err := NewClient("tcp://localhost:14243")
+  h, ok := syscall.Getenv("DOCKR_HOST")
+  if !ok {
+    h = "tcp://localhost:14243"
+  }
+  c,err := NewClient(h)
   if err != nil {
     panic(err)
   }
