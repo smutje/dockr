@@ -2,10 +2,10 @@ package dockr
 
 import (
   "net/url"
+  "net/http/httputil"
   "io"
   "bytes"
   "archive/tar"
-  "github.com/smutje/http/chunked"
 )
 
 type BuildRequest struct {
@@ -41,7 +41,7 @@ func (c *Client) Build(q *BuildRequest) (io.ReadCloser, error) {
   }
   con, buf := client.Hijack()
   // response is chunked
-  ch := chunked.NewReader(buf)
+  ch := httputil.NewChunkedReader(buf)
   return &hijackReadWriteCloser{con,ch}, nil
 }
 
