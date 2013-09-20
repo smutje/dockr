@@ -4,13 +4,17 @@ go:
 env:
   - DOCKR_HOST=unix:///var/run/docker.sock
 before_install:
-  - sudo sh -c "wget -O - http://get.docker.io/gpg | apt-key add -"
-  - sudo sh -c "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
+  - sudo echo "deb http://download.virtualbox.org/virtualbox/debian precise contrib" | sudo tee -a /etc/apt/sources.list
+  - wget http://download.virtualbox.org/virtualbox/debian/oracle_vbox.asc -O- | sudo apt-key add -
   - sudo apt-get update
+  - sudo apt-get -y install linux-headers-$(uname -r)
+  - sudo apt-get -y install virtualbox-4.2
+  - VBoxManage -v
+  - wget http://files.vagrantup.com/packages/db8e7a9c79b23264da129f55cf8569167fc22415/vagrant_1.3.3_i686.deb -O /tmp/vagrant.deb
+  - sudo dpkg -i /tmp/vagrant.deb
   - go get github.com/mattn/gom
 install:
-  - sudo apt-get install --yes lxc-docker
-  - sudo docker pull ubuntu:precise
+  - vagrant up
   - $HOME/gopath/bin/gom install
 script:
   - $HOME/gopath/bin/gom test
