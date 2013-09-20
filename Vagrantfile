@@ -15,6 +15,7 @@ apt-get update
 apt-get install --yes linux-image-extra-`uname -r` lxc-docker
 sed -i 's/\/usr\/bin\/docker -d/\/usr\/bin\/docker -H=0.0.0.0:4243 -d/' /etc/init/docker.conf
 service docker restart
+sleep 5
 docker -H=127.0.0.1:4243 pull ubuntu:precise
 SHELL
 end
