@@ -6,6 +6,8 @@ import (
   "io"
   "bytes"
   "archive/tar"
+  "bufio"
+  "regexp"
 )
 
 type BuildRequest struct {
@@ -52,4 +54,22 @@ func SimpleDockerFile(content string) (io.Reader, error) {
   tw.Write([]byte(content))
   tw.Close()
   return buf, nil
+}
+
+var (
+  build_rx = regexp.MustCompile(`\ASuccessfully built ([0-9a-f]{12})\z`)
+)
+
+func BuildStatusScanner(rd io.Reader) <-chan string {
+  sc := bufio.NewScanner(rd)
+  ch := make(chan string, 1)
+  go func(){
+    for sc.Scan() {
+      if m := build_rx.FindStringSubmatch(sc.Text()) ; m != nil {
+        ch <- m[1]
+        return
+      }
+    }
+  }()
+  return ch
 }

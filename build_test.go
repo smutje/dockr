@@ -1,9 +1,7 @@
 package dockr
 
 import (
-  "os"
-  "io"
- // "bufio"
+  "time"
   "testing"
 )
 
@@ -19,13 +17,11 @@ func TestBuild(t *testing.T) {
   if err != nil {
     t.Fatal(err)
   }
-  io.Copy(os.Stderr, rc)
-  /*rd := bufio.NewReader(rc)
-  for {
-    str, err := rd.ReadString('\n')
-    if err != nil {
-      t.Fatal(err)
-    }
-    t.Log(str)
-  }*/
+  ch := BuildStatusScanner(rc)
+  select{
+    case <-ch :
+    case <-time.After(5 * time.Second) :
+      t.Fatal("Timed out")
+  }
+  rc.Close()
 }
