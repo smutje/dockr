@@ -8,12 +8,12 @@ import (
 )
 
 var (
-  ID_REGEXP = regexp.MustCompile("\\A[0-9a-fA-F]{12,40}\\z")
+  ID_REGEXP = regexp.MustCompile("\\A[0-9a-fA-F]{12,70}\\z")
 )
 
 type InvalidId string
 func (err InvalidId) Error() string {
-  return fmt.Sprintf("Invalid id: \"%20s...\"", err)
+  return fmt.Sprintf("Invalid id: \"%20s...\"", string(err))
 }
 
 type UnexpectedHTTPStatus struct{
