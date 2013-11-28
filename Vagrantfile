@@ -11,11 +11,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :shell, inline: <<'SHELL'
 wget -O - http://get.docker.io/gpg | apt-key add -
 echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list
+echo 'export DOCKER_OPTS="-H=0.0.0.0:4243"' > /etc/default/docker
 apt-get update
 apt-get install --yes linux-image-extra-`uname -r` lxc-docker
-sed -i 's/\/usr\/bin\/docker -d/\/usr\/bin\/docker -H=0.0.0.0:4243 -d/' /etc/init/docker.conf
-service docker restart
-sleep 5
 docker -H=127.0.0.1:4243 pull ubuntu:precise
 SHELL
 end
