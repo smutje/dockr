@@ -29,13 +29,21 @@ func (c *DefaultConnector) String() string {
   return fmt.Sprintf("%s://%s", c.network, c.address)
 }
 
-func NewDefaultConnector( endpoint string ) (*DefaultConnector, error) {
+func NewDefaultConnector( endpoint string ) (Connector, error) {
   subs := strings.SplitN( endpoint, "://", 2 )
   if len(subs) != 2 {
     return nil, fmt.Errorf("Enpoint must be given as <protocol>://<address> (e.g. unix:///var/run/docker.sock or https://localhost:4243)")
   }
   return &DefaultConnector{ subs[0], subs[1] }, nil
 }
+func MustDefaultConnector( endpoint string) Connector{
+  con, err := NewDefaultConnector(endpoint)
+  if err != nil {
+    panic(err)
+  }
+  return con
+}
+
 
 type Client struct {
   connector Connector

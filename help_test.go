@@ -7,6 +7,8 @@ import (
   "io"
   "bufio"
   "syscall"
+  "time"
+  "runtime/debug"
 )
 
 type testResponseWriter struct {
@@ -59,14 +61,56 @@ func (t *testServer) String() string {
   return "TestServer"
 }
 
+type debugNetConn struct {
+  inner net.Conn
+}
+
+func (c *debugNetConn) Read(b []byte) (n int, err error){
+  return c.inner.Read(b)
+}
+func (c *debugNetConn) Write(b []byte) (n int, err error){
+  return c.inner.Write(b)
+}
+func (c *debugNetConn) Close() error{
+  debug.PrintStack()
+  return c.inner.Close()
+}
+func (c *debugNetConn) LocalAddr() net.Addr{
+  return c.inner.LocalAddr()
+}
+func (c *debugNetConn) RemoteAddr() net.Addr{
+  return c.inner.RemoteAddr()
+}
+func (c *debugNetConn) SetDeadline(t time.Time) error{
+  return c.inner.SetDeadline(t)
+}
+func (c *debugNetConn) SetReadDeadline(t time.Time) error{
+  return c.inner.SetReadDeadline(t)
+}
+func (c *debugNetConn) SetWriteDeadline(t time.Time) error{
+  return c.inner.SetWriteDeadline(t)
+}
+
+type debugConnector struct {
+  inner Connector
+}
+func (c *debugConnector) String() string {
+  return c.inner.String()
+}
+func (c *debugConnector) Connect() (con2 net.Conn,err error) {
+  con, err := c.inner.Connect()
+  if err != nil {
+    return
+  }
+  con2 = &debugNetConn{con}
+  return
+}
+
 func newTestClient() *Client {
   h, ok := syscall.Getenv("DOCKR_HOST")
   if !ok {
     h = "tcp://localhost:14243"
   }
-  c,err := NewClient(h)
-  if err != nil {
-    panic(err)
-  }
+  c := NewClientFromConnector(MustDefaultConnector(h))
   return c
 }

@@ -56,6 +56,12 @@ type StopContainerRequest struct {
   Timeout         int
 }
 
+type Container struct {
+  Id              string
+  Image           string
+  Command         string
+}
+
 func (q *StopContainerRequest) Values() url.Values {
   query := url.Values{}
   query.Set("t", fmt.Sprintf("%d",q.Timeout))
@@ -70,6 +76,10 @@ type AttachContainerRequest struct {
   // What to post on this streams:
   Logs            bool // get archived stuff?
   Stream          bool // stream new stuff?
+}
+
+type ListContainerRequest struct{
+  All             bool
 }
 
 func boolString(b bool) string {
@@ -87,6 +97,12 @@ func (q *AttachContainerRequest) Values() url.Values {
   query.Set("stderr", boolString(q.Stderr))
   query.Set("logs"  , boolString(q.Logs))
   query.Set("stream", boolString(q.Stream))
+  return query
+}
+
+func (q *ListContainerRequest) Values() url.Values {
+  query := url.Values{}
+  query.Set("all", boolString(q.All))
   return query
 }
 
@@ -162,3 +178,20 @@ func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadW
   return &hijackReadWriteCloser{con,buf}, nil
 }
 
+func (c *Client) ListContainers(q *ListContainerRequest) ([]Container, error){
+  res, err := c.callfquery("GET","/v1.4/containers/json",q.Values())
+  if err != nil {
+    return nil, err
+  }
+  //_, rd := con.Hijack()
+  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+    return nil, err
+  }
+  var a []Container
+  //tee := io.TeeReader(rd, os.Stderr)
+  err = json.NewDecoder(res.Body).Decode(&a)
+  if err != nil {
+    return nil, err
+  }
+  return a[:], nil
+}

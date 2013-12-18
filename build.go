@@ -57,7 +57,7 @@ func SimpleDockerFile(content string) (io.Reader, error) {
 }
 
 var (
-  build_rx = regexp.MustCompile(`\ASuccessfully built ([0-9a-f]{12})\z`)
+  build_rx = regexp.MustCompile(`\A\r?Successfully built ([0-9a-f]{12})\z`)
 )
 
 func BuildStatusScanner(rd io.Reader) <-chan string {
@@ -65,7 +65,8 @@ func BuildStatusScanner(rd io.Reader) <-chan string {
   ch := make(chan string, 1)
   go func(){
     for sc.Scan() {
-      if m := build_rx.FindStringSubmatch(sc.Text()) ; m != nil {
+      txt := sc.Text()
+      if m := build_rx.FindStringSubmatch(txt) ; m != nil {
         ch <- m[1]
         return
       }

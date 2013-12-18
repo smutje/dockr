@@ -4,6 +4,8 @@ import (
   "testing"
   "bufio"
   "time"
+  "io"
+  "os"
 )
 
 func TestCreateContainerWithoutAnything(t *testing.T){
@@ -58,6 +60,39 @@ func TestStartStopContainer(t *testing.T){
   }
 }
 
+func TestListContainer(t *testing.T){
+  client := newTestClient()
+  res, err := client.CreateContainer(&CreateContainerRequest{
+    Cmd:[]string{"uname","-a"},
+    Image:"ubuntu:precise",
+  })
+  if err != nil {
+    t.Fatal(err)
+  }
+  if res == nil {
+    t.Fatal("Repsonse was nil")
+  }
+  err = client.StartContainer(res.Id,&StartContainerRequest{})
+  if err != nil {
+    t.Fatal(err)
+  }
+  cont, err := client.ListContainers(&ListContainerRequest{})
+  if err != nil {
+    t.Fatal(err)
+  }
+  if len(cont) != 1 {
+    t.Fatalf("Expected to list one container, got %d", len(cont))
+  }
+  err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
+  if err != nil {
+    t.Fatal(err)
+  }
+  err = client.DeleteContainer(res.Id)
+  if err != nil {
+    t.Fatal(err)
+  }
+}
+
 func TestStartAttachStopContainer(t *testing.T){
   client := newTestClient()
   res, err := client.CreateContainer(&CreateContainerRequest{
@@ -75,7 +110,8 @@ func TestStartAttachStopContainer(t *testing.T){
   if err != nil {
     t.Fatal( err )
   }
-  rd := bufio.NewReader(rwc)
+  tee := io.TeeReader(rwc, os.Stderr)
+  rd := bufio.NewReader(tee)
   go func(){
     str, err := rd.ReadString('\n')
     if err != nil {
@@ -83,7 +119,7 @@ func TestStartAttachStopContainer(t *testing.T){
       return
     }
     if str != "pong\n" {
-      t.Fatalf("Expected 'pong', got '%s'",str)
+      t.Fatalf("Expected 'pong', got '%q'",str)
     }
     ch <- rwc.Close()
   }()
@@ -91,17 +127,19 @@ func TestStartAttachStopContainer(t *testing.T){
   if err != nil {
     t.Fatal(err)
   }
-  err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
-  if err != nil {
-    t.Fatal(err)
-  }
   select {
   case err = <-ch :
     if err != nil {
-      t.Fatal(err)
+      t.Fail()
+      t.Log(err)
     }
   case <-time.After(3 * time.Second) :
-    t.Fatal("Response timed out")
+    t.Fail()
+    t.Log("Response timed out")
+  }
+  err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
+  if err != nil {
+    t.Fatal(err)
   }
   err = client.DeleteContainer(res.Id)
   if err != nil {

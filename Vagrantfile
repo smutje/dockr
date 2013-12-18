@@ -5,8 +5,8 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "opscode-ubuntu-13.04"
-  config.vm.box_url = "https://opscode-vm-bento.s3.amazonaws.com/vagrant/opscode_ubuntu-13.04_provisionerless.box"
+  config.vm.box = "opscode-ubuntu-13.10"
+  config.vm.box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-13.10_chef-provisionerless.box"
   config.vm.network :forwarded_port, guest: 4243, host: 14243
   config.vm.provision :shell, inline: <<'SHELL'
 wget -O - http://get.docker.io/gpg | apt-key add -

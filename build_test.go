@@ -20,7 +20,7 @@ func TestBuild(t *testing.T) {
   ch := BuildStatusScanner(rc)
   select{
     case <-ch :
-    case <-time.After(5 * time.Second) :
+    case <-time.After(25 * time.Second) :
       t.Fatal("Timed out")
   }
   rc.Close()
