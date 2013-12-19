@@ -4,8 +4,6 @@ import (
   "testing"
   "bufio"
   "time"
-  "io"
-  "os"
 )
 
 func TestCreateContainerWithoutAnything(t *testing.T){
@@ -65,6 +63,7 @@ func TestListContainer(t *testing.T){
   res, err := client.CreateContainer(&CreateContainerRequest{
     Cmd:[]string{"uname","-a"},
     Image:"ubuntu:precise",
+//    ExposedPorts:map[string]struct{}{ "1337": struct{}{} },
   })
   if err != nil {
     t.Fatal(err)
@@ -72,16 +71,25 @@ func TestListContainer(t *testing.T){
   if res == nil {
     t.Fatal("Repsonse was nil")
   }
-  err = client.StartContainer(res.Id,&StartContainerRequest{})
+  err = client.StartContainer(res.Id,&StartContainerRequest{
+    PortBindings: map[string][]HostPort{ "1337/tcp": {HostPort{Ip: "0.0.0.0",Port: "1338"}}},
+  })
   if err != nil {
     t.Fatal(err)
   }
-  cont, err := client.ListContainers(&ListContainerRequest{})
+  cont, err := client.ListContainers(&ListContainersRequest{})
   if err != nil {
     t.Fatal(err)
   }
   if len(cont) != 1 {
-    t.Fatalf("Expected to list one container, got %d", len(cont))
+    t.Fail()
+    t.Logf("Expected to list one container, got %d", len(cont))
+  } else {
+    c := cont[0]
+    if len(c.Ports) != 1 {
+      t.Fail()
+      t.Logf("Expected to list one port, got %d", len(c.Ports))
+    }
   }
   err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
   if err != nil {
@@ -110,8 +118,7 @@ func TestStartAttachStopContainer(t *testing.T){
   if err != nil {
     t.Fatal( err )
   }
-  tee := io.TeeReader(rwc, os.Stderr)
-  rd := bufio.NewReader(tee)
+  rd := bufio.NewReader(rwc)
   go func(){
     str, err := rd.ReadString('\n')
     if err != nil {

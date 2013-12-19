@@ -20,7 +20,8 @@ type CreateContainerRequest struct {
   AttachStdin     bool
   AttachStdout    bool
   AttachStderr    bool
-  PortSpecs       []string
+  //PortSpecs       []string
+  ExposedPorts    map[string]struct{}
   Tty             bool // Attach standard streams to a tty, including stdin if it is not closed.
   OpenStdin       bool // Open stdin
   StdinOnce       bool // If true, close stdin after the 1 attached client disconnects.
@@ -46,9 +47,15 @@ type KeyValuePair struct {
   Value string
 }
 
+type HostPort struct {
+  Ip    string `json:"HostIp"`
+  Port  string `json:"HostPort"`
+}
+
 type StartContainerRequest struct {
   Binds           []string
   ContainerIDFile string
+  PortBindings    map[string][]HostPort
   LxcConf         []KeyValuePair
 }
 
@@ -56,10 +63,18 @@ type StopContainerRequest struct {
   Timeout         int
 }
 
+type Port struct {
+  PrivatePort int64
+  PublicPort  int64
+  Type        string
+  IP          string
+}
+
 type Container struct {
   Id              string
   Image           string
   Command         string
+  Ports           []Port
 }
 
 func (q *StopContainerRequest) Values() url.Values {
@@ -78,7 +93,7 @@ type AttachContainerRequest struct {
   Stream          bool // stream new stuff?
 }
 
-type ListContainerRequest struct{
+type ListContainersRequest struct{
   All             bool
 }
 
@@ -100,14 +115,14 @@ func (q *AttachContainerRequest) Values() url.Values {
   return query
 }
 
-func (q *ListContainerRequest) Values() url.Values {
+func (q *ListContainersRequest) Values() url.Values {
   query := url.Values{}
   query.Set("all", boolString(q.All))
   return query
 }
 
 func (c *Client) CreateContainer(q *CreateContainerRequest) (*CreateContainerResponse, error){
-  res, err := c.callfjson("POST","/v1.4/containers/create",q)
+  res, err := c.callfjson("POST","/v1.8/containers/create",q)
   if err != nil {
     return nil, err
   }
@@ -128,7 +143,7 @@ func (c *Client) DeleteContainer(id string) error {
   if err != nil {
     return err
   }
-  res, err := c.callf("DELETE","/v1.4/containers/%s",id)
+  res, err := c.callf("DELETE","/v1.8/containers/%s",id)
   if err != nil {
     return err
   }
@@ -141,7 +156,7 @@ func (c *Client) StartContainer(id string, q *StartContainerRequest) error {
   if err != nil {
     return err
   }
-  res, err := c.callfjson("POST","/v1.4/containers/%s/start",q, id)
+  res, err := c.callfjson("POST","/v1.8/containers/%s/start",q, id)
   if err != nil {
     return err
   }
@@ -153,7 +168,7 @@ func (c *Client) StopContainer(id string, q *StopContainerRequest) error {
   if err != nil {
     return err
   }
-  res, err := c.callfquery("POST","/v1.4/containers/%s/stop",q.Values(), id)
+  res, err := c.callfquery("POST","/v1.8/containers/%s/stop",q.Values(), id)
   if err != nil {
     return err
   }
@@ -178,8 +193,8 @@ func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadW
   return &hijackReadWriteCloser{con,buf}, nil
 }
 
-func (c *Client) ListContainers(q *ListContainerRequest) ([]Container, error){
-  res, err := c.callfquery("GET","/v1.4/containers/json",q.Values())
+func (c *Client) ListContainers(q *ListContainersRequest) ([]Container, error){
+  res, err := c.callfquery("GET","/v1.8/containers/json",q.Values())
   if err != nil {
     return nil, err
   }
