@@ -82,10 +82,7 @@ func (c *Client) do2(req *http.Request) (*http.Response, *httputil.ClientConn, e
 }
 
 func (c *Client) do(req *http.Request) (res *http.Response, err error){
-  res, con, err := c.do2(req)
-  if con != nil {
-    con.Close()
-  }
+  res, _, err = c.do2(req)
   return
 }
 
@@ -102,10 +99,7 @@ func (c *Client) callf2(verb, format string, args ...string) (*http.Response, *h
 }
 
 func (c *Client) callf(verb, format string, args ...string) (res *http.Response, err error){
-  res, con, err := c.callf2(verb, format, args... )
-  if con != nil {
-    con.Close()
-  }
+  res, _, err = c.callf2(verb, format, args... )
   return
 }
 
@@ -127,10 +121,7 @@ func (c *Client) callfjson2(verb, format string, body interface{}, args ...strin
 }
 
 func (c *Client) callfjson(verb, format string, body interface{}, args ...string) (res *http.Response,err  error){
-  res, con, err := c.callfjson2(verb, format, body, args...)
-  if con != nil {
-    con.Close()
-  }
+  res, _, err = c.callfjson2(verb, format, body, args...)
   return
 }
 
@@ -159,10 +150,7 @@ func (c *Client) callfquerybody2(verb, format string, query url.Values,body io.R
 }
 
 func (c *Client) callfquerybody(verb, format string, query url.Values,body io.Reader, args ...string) (res *http.Response, err error){
-  res, con, err := c.callfquerybody2(verb, format, query, body, args...)
-  if con != nil {
-    con.Close()
-  }
+  res, _, err = c.callfquerybody2(verb, format, query, body, args...)
   return
 }
 

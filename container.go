@@ -148,6 +148,7 @@ func (c *Client) DeleteContainer(id string) error {
     return err
   }
   // 406 = you have to stop before delete
+  res.Body.Close()
   return expectHTTPStatus(res.StatusCode, 204)
 }
 
@@ -160,6 +161,7 @@ func (c *Client) StartContainer(id string, q *StartContainerRequest) error {
   if err != nil {
     return err
   }
+  res.Body.Close()
   return expectHTTPStatus(res.StatusCode, 204)
 }
 
@@ -193,17 +195,40 @@ func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadW
   return &hijackReadWriteCloser{con,buf}, nil
 }
 
+func (c *Client) GetContainer(id string) (*Container, error){
+  err := validateId(id)
+  if err != nil {
+    return nil, err
+  }
+  res, err := c.callf("GET","/v1.8/containers/%s/json", id)
+  if err != nil {
+    return nil, err
+  }
+  defer res.Body.Close()
+  if res.StatusCode == 404 {
+    return nil, NOT_FOUND
+  }
+  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+    return nil, err
+  }
+  var a Container
+  err = json.NewDecoder(res.Body).Decode(&a)
+  if err != nil {
+    return nil, err
+  }
+  return &a, nil
+}
+
 func (c *Client) ListContainers(q *ListContainersRequest) ([]Container, error){
   res, err := c.callfquery("GET","/v1.8/containers/json",q.Values())
   if err != nil {
     return nil, err
   }
-  //_, rd := con.Hijack()
+  defer res.Body.Close()
   if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
     return nil, err
   }
   var a []Container
-  //tee := io.TeeReader(rd, os.Stderr)
   err = json.NewDecoder(res.Body).Decode(&a)
   if err != nil {
     return nil, err

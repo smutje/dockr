@@ -9,6 +9,7 @@ import (
 
 var (
   ID_REGEXP = regexp.MustCompile("\\A[0-9a-fA-F]{12,70}\\z")
+  NOT_FOUND = fmt.Errorf("Not found")
 )
 
 type InvalidId string
@@ -22,7 +23,7 @@ type UnexpectedHTTPStatus struct{
 }
 
 func (err *UnexpectedHTTPStatus) Error() string {
-  return fmt.Sprintf("Unexpected HTTP status %d, expected %q",err.Actual, err.Expected)
+  return fmt.Sprintf("Unexpected HTTP status %d, expected %v",err.Actual, err.Expected)
 }
 
 func validateId(id string) error {

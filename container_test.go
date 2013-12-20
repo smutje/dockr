@@ -101,6 +101,47 @@ func TestListContainer(t *testing.T){
   }
 }
 
+func TestGetContainer(t *testing.T){
+  client := newTestClient()
+  res, err := client.CreateContainer(&CreateContainerRequest{
+    Cmd:[]string{"uname","-a"},
+    Image:"ubuntu:precise",
+  })
+  if err != nil {
+    t.Fatal(err)
+  }
+  if res == nil {
+    t.Fatal("Repsonse was nil")
+  }
+  err = client.StartContainer(res.Id,&StartContainerRequest{
+    PortBindings: map[string][]HostPort{ "1337/tcp": {HostPort{Ip: "0.0.0.0",Port: "1338"}}},
+  })
+  if err != nil {
+    t.Fatal(err)
+  }
+  cont, err := client.GetContainer(res.Id)
+  if err != nil {
+    t.Fatal(err)
+  }
+  t.Logf("%#v",cont)
+  err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
+  if err != nil {
+    t.Fatal(err)
+  }
+  err = client.DeleteContainer(res.Id)
+  if err != nil {
+    t.Fatal(err)
+  }
+}
+
+func TestGetMissingContainer(t *testing.T){
+  client := newTestClient()
+  _, err := client.GetContainer("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+  if err != NOT_FOUND {
+    t.Fatal(err)
+  }
+}
+
 func TestStartAttachStopContainer(t *testing.T){
   client := newTestClient()
   res, err := client.CreateContainer(&CreateContainerRequest{
