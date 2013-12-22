@@ -70,11 +70,66 @@ type Port struct {
   IP          string
 }
 
-type Container struct {
-  Id              string
-  Image           string
-  Command         string
-  Ports           []Port
+func parsePort(key string, hp HostPort) Port {
+  p := Port{IP: hp.Ip}
+  fmt.Sscanf(key,"%d/%s", &p.PublicPort, &p.Type)
+  fmt.Sscanf(hp.Port,"%d",&p.PrivatePort)
+  return p
+}
+
+type fullContainer struct {
+  XID              string    `json:"ID"`
+  XImage           string    `json:"Image"`
+  XHostConfig      StartContainerRequest `json:"HostConfig"`
+}
+
+type lightContainer struct {
+  XID              string    `json:"ID"`
+  XImage           string    `json:"Image"`
+  XPorts           []Port    `json:"Ports"`
+  full            *fullContainer `json:"-"`
+}
+
+func (l *fullContainer) Id() string {
+  return l.XID
+}
+func (l *fullContainer) Image() string {
+  return l.XImage
+}
+func (l *fullContainer) Ports() []Port {
+  ports := make([]Port,0,len(l.XHostConfig.PortBindings))
+  for k,binds := range(l.XHostConfig.PortBindings) {
+    for _,p := range(binds){
+      ports = append(ports, parsePort(k,p))
+    }
+  }
+  return ports
+}
+
+func (l *lightContainer) Id() string {
+  return l.XID
+}
+func (l *lightContainer) Image() string {
+  return l.XImage
+}
+func (l *lightContainer) Ports() []Port {
+  return l.XPorts
+}
+
+
+type Command struct {
+  Executeable string
+  Arguments   []string
+}
+
+type Container interface {
+  Ports() []Port
+  Image() string
+}
+
+type ExistingContainer interface {
+  Id() string
+  Container
 }
 
 func (q *StopContainerRequest) Values() url.Values {
@@ -195,7 +250,7 @@ func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadW
   return &hijackReadWriteCloser{con,buf}, nil
 }
 
-func (c *Client) GetContainer(id string) (*Container, error){
+func (c *Client) GetContainer(id string) (Container, error){
   err := validateId(id)
   if err != nil {
     return nil, err
@@ -211,7 +266,7 @@ func (c *Client) GetContainer(id string) (*Container, error){
   if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
     return nil, err
   }
-  var a Container
+  var a fullContainer
   err = json.NewDecoder(res.Body).Decode(&a)
   if err != nil {
     return nil, err
@@ -228,10 +283,14 @@ func (c *Client) ListContainers(q *ListContainersRequest) ([]Container, error){
   if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
     return nil, err
   }
-  var a []Container
+  var a []lightContainer;
   err = json.NewDecoder(res.Body).Decode(&a)
   if err != nil {
     return nil, err
   }
-  return a[:], nil
+  r := make([]Container,0,len(a))
+  for _,cont := range(a) {
+    r = append(r, &cont)
+  }
+  return r, nil
 }

@@ -86,9 +86,9 @@ func TestListContainer(t *testing.T){
     t.Logf("Expected to list one container, got %d", len(cont))
   } else {
     c := cont[0]
-    if len(c.Ports) != 1 {
+    if len(c.Ports()) != 1 {
       t.Fail()
-      t.Logf("Expected to list one port, got %d", len(c.Ports))
+      t.Logf("Expected to list one port, got %d", len(c.Ports()))
     }
   }
   err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
@@ -106,6 +106,7 @@ func TestGetContainer(t *testing.T){
   res, err := client.CreateContainer(&CreateContainerRequest{
     Cmd:[]string{"uname","-a"},
     Image:"ubuntu:precise",
+    ExposedPorts:map[string]struct{}{ "1337": struct{}{} },
   })
   if err != nil {
     t.Fatal(err)
@@ -123,7 +124,10 @@ func TestGetContainer(t *testing.T){
   if err != nil {
     t.Fatal(err)
   }
-  t.Logf("%#v",cont)
+  p := cont.Ports()
+  if len(p) != 1 {
+    t.Fatalf("Expect the container to have one port but it has %d: %q",len(p),p)
+  }
   err = client.StopContainer(res.Id,&StopContainerRequest{Timeout: 3})
   if err != nil {
     t.Fatal(err)
