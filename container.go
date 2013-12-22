@@ -72,8 +72,8 @@ type Port struct {
 
 func parsePort(key string, hp HostPort) Port {
   p := Port{IP: hp.Ip}
-  fmt.Sscanf(key,"%d/%s", &p.PublicPort, &p.Type)
-  fmt.Sscanf(hp.Port,"%d",&p.PrivatePort)
+  fmt.Sscanf(key,"%d/%s", &p.PrivatePort, &p.Type)
+  fmt.Sscanf(hp.Port,"%d",&p.PublicPort)
   return p
 }
 
