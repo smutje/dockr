@@ -250,7 +250,7 @@ func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadW
   return &hijackReadWriteCloser{con,buf}, nil
 }
 
-func (c *Client) GetContainer(id string) (Container, error){
+func (c *Client) GetContainer(id string) (ExistingContainer, error){
   err := validateId(id)
   if err != nil {
     return nil, err
@@ -274,7 +274,7 @@ func (c *Client) GetContainer(id string) (Container, error){
   return &a, nil
 }
 
-func (c *Client) ListContainers(q *ListContainersRequest) ([]Container, error){
+func (c *Client) ListContainers(q *ListContainersRequest) ([]ExistingContainer, error){
   res, err := c.callfquery("GET","/v1.8/containers/json",q.Values())
   if err != nil {
     return nil, err
@@ -288,7 +288,7 @@ func (c *Client) ListContainers(q *ListContainersRequest) ([]Container, error){
   if err != nil {
     return nil, err
   }
-  r := make([]Container,0,len(a))
+  r := make([]ExistingContainer,0,len(a))
   for _,cont := range(a) {
     r = append(r, &cont)
   }
