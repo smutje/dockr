@@ -34,7 +34,6 @@ type CreateContainerRequest struct {
   WorkingDir      string
   Entrypoint      []string
   NetworkDisabled bool
-  Privileged      bool
 }
 
 type CreateContainerResponse struct {
@@ -57,6 +56,7 @@ type StartContainerRequest struct {
   ContainerIDFile string
   PortBindings    map[string][]HostPort
   LxcConf         []KeyValuePair
+  Privileged      bool
 }
 
 type StopContainerRequest struct {
