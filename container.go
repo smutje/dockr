@@ -290,7 +290,8 @@ func (c *Client) ListContainers(q *ListContainersRequest) ([]ExistingContainer, 
   }
   r := make([]ExistingContainer,0,len(a))
   for _,cont := range(a) {
-    r = append(r, &cont)
+    lcont := cont
+    r = append(r, &lcont)
   }
   return r, nil
 }
