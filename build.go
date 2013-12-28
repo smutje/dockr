@@ -38,7 +38,7 @@ func (c *Client) Build(q *BuildRequest) (io.ReadCloser, error) {
     }
     return nil, err
   }
-  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+  if err = expectHTTPStatus(res, 200); err != nil {
     return nil, err
   }
   con, buf := client.Hijack()

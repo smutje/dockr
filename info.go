@@ -11,11 +11,11 @@ type VersionResponse struct {
 }
 
 func (c *Client) Version() (*VersionResponse, error) {
-  res, err := c.callf("GET","/v1.4/version")
+  res, err := c.callf("GET","/v1.8/version")
   if err != nil {
     return nil, err
   }
-  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+  if err = expectHTTPStatus(res, 200); err != nil {
     return nil, err
   }
   var rep VersionResponse

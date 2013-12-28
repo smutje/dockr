@@ -2,6 +2,7 @@ package dockr
 
 import (
   "net"
+  "net/http"
   "io"
   "fmt"
   "regexp"
@@ -20,10 +21,11 @@ func (err InvalidId) Error() string {
 type UnexpectedHTTPStatus struct{
   Actual   int
   Expected []int
+  Message  string
 }
 
 func (err *UnexpectedHTTPStatus) Error() string {
-  return fmt.Sprintf("Unexpected HTTP status %d, expected %v",err.Actual, err.Expected)
+  return fmt.Sprintf("Unexpected HTTP status %d, expected %v. Message: %v",err.Actual, err.Expected, err.Message)
 }
 
 func validateId(id string) error {
@@ -33,13 +35,21 @@ func validateId(id string) error {
   return nil
 }
 
-func expectHTTPStatus( actual int, expected ...int) error {
+func expectHTTPStatus( res *http.Response, expected ...int) error {
   for _, e := range expected {
-    if e == actual {
+    if e == res.StatusCode {
       return nil
     }
   }
-  return &UnexpectedHTTPStatus{ actual, expected }
+  var buf []byte
+  if res.ContentLength < 0 || res.ContentLength > 1024{
+    buf = make([]byte,1024)
+  }else{
+    buf = make([]byte,res.ContentLength)
+  }
+  n,_ := io.ReadFull(res.Body, buf)
+  // discard all the f***ing errors
+  return &UnexpectedHTTPStatus{ res.StatusCode, expected, string(buf[1:n]) }
 }
 
 type hijackReadWriteCloser struct {

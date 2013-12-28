@@ -50,6 +50,7 @@ type testServer struct {
 func (t *testServer) Connect() (net.Conn, error){
   a, b := net.Pipe()
   go func(){
+    defer b.Close()
     rd := bufio.NewReader(b)
     req, _ := http.ReadRequest(rd)
     t.Handler.ServeHTTP(newTestResponseWriter(b), req)

@@ -70,3 +70,27 @@ func TestClientHijackedConnection(t *testing.T) {
     t.Fatalf("Expected the response to be \"LOL\\n\", got %s", rs)
   }
 }
+
+func TestClientHttpError(t *testing.T) {
+  s := testServer{
+    http.HandlerFunc(func(res http.ResponseWriter, req *http.Request){
+      res.Header().Add("Content-Type","text/plain")
+      res.WriteHeader(500)
+      io.WriteString(res, "Foo")
+    }),
+  }
+  client := NewClientFromConnector(&s)
+  req,_  := http.NewRequest("GET","/info", nil)
+  res, err := client.do(req)
+  if err != nil {
+    t.Fatal(err)
+  }
+  err = expectHTTPStatus(res, 200)
+  errh,ok := err.(*UnexpectedHTTPStatus)
+  if !ok {
+    t.Fatalf("Expected an UnexpectedHTTPStatus error, got %#v",err)
+  }
+  if errh.Message != "Foo" {
+    t.Fatalf("Wrong error message: %s",errh.Message)
+  }
+}

@@ -181,7 +181,7 @@ func (c *Client) CreateContainer(q *CreateContainerRequest) (*CreateContainerRes
   if err != nil {
     return nil, err
   }
-  err = expectHTTPStatus( res.StatusCode, 201 )
+  err = expectHTTPStatus( res, 201 )
   if err != nil {
     return nil, err
   }
@@ -204,7 +204,7 @@ func (c *Client) DeleteContainer(id string) error {
   }
   // 406 = you have to stop before delete
   res.Body.Close()
-  return expectHTTPStatus(res.StatusCode, 204)
+  return expectHTTPStatus(res, 204)
 }
 
 func (c *Client) StartContainer(id string, q *StartContainerRequest) error {
@@ -217,7 +217,7 @@ func (c *Client) StartContainer(id string, q *StartContainerRequest) error {
     return err
   }
   res.Body.Close()
-  return expectHTTPStatus(res.StatusCode, 204)
+  return expectHTTPStatus(res, 204)
 }
 
 func (c *Client) StopContainer(id string, q *StopContainerRequest) error {
@@ -229,7 +229,7 @@ func (c *Client) StopContainer(id string, q *StopContainerRequest) error {
   if err != nil {
     return err
   }
-  return expectHTTPStatus(res.StatusCode, 204)
+  return expectHTTPStatus(res, 204)
 }
 func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadWriteCloser, error) {
   err := validateId(id)
@@ -243,7 +243,7 @@ func (c *Client) AttachContainer(id string, q *AttachContainerRequest) (io.ReadW
     }
     return nil, err
   }
-  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+  if err = expectHTTPStatus(res, 200); err != nil {
     return nil, err
   }
   con, buf := client.Hijack()
@@ -263,7 +263,7 @@ func (c *Client) GetContainer(id string) (ExistingContainer, error){
   if res.StatusCode == 404 {
     return nil, NOT_FOUND
   }
-  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+  if err = expectHTTPStatus(res, 200); err != nil {
     return nil, err
   }
   var a fullContainer
@@ -280,7 +280,7 @@ func (c *Client) ListContainers(q *ListContainersRequest) ([]ExistingContainer, 
     return nil, err
   }
   defer res.Body.Close()
-  if err = expectHTTPStatus(res.StatusCode, 200); err != nil {
+  if err = expectHTTPStatus(res, 200); err != nil {
     return nil, err
   }
   var a []lightContainer;
