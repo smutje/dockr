@@ -6,6 +6,7 @@ import (
   "io"
   "fmt"
   "regexp"
+  "strings"
 )
 
 var (
@@ -47,9 +48,9 @@ func expectHTTPStatus( res *http.Response, expected ...int) error {
   }else{
     buf = make([]byte,res.ContentLength)
   }
-  n,_ := io.ReadFull(res.Body, buf)
+  io.ReadFull(res.Body, buf)
   // discard all the f***ing errors
-  return &UnexpectedHTTPStatus{ res.StatusCode, expected, string(buf[1:n]) }
+  return &UnexpectedHTTPStatus{ res.StatusCode, expected, strings.Trim(string(buf),"\n \x00") }
 }
 
 type hijackReadWriteCloser struct {
